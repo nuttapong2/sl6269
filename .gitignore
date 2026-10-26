@@ -1,0 +1,17 @@
+# Local student records and media
+*.jpg
+*.jpeg
+*.png
+*.pdf
+*.xlsx
+*.xls
+
+# Local build/package files
+.sites-package-stage/
+.site-build-marker
+site-package.tar.gz
+node_modules/
+.dev.vars
+.env*
+!.env.example
+

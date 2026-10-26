@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#123c35" />
+  <title>ป.6/2 พลังดี</title>  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2716%27 fill=%27%23123c35%27/%3E%3Cpath d=%27M17 35l10 10 21-25%27 fill=%27none%27 stroke=%27%23f2c66d%27 stroke-width=%277%27/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600;700&family=IBM+Plex+Sans+Thai+Looped:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">๖๒</span><div><b>ห้องเรียนพลังดี</b><small>ประถมศึกษาปีที่ 6/2</small></div></div>
+      <nav>
+        <button class="nav active" data-view="dashboard">⌂ <span>ภาพรวม</span></button>
+        <button class="nav" data-view="attendance">✓ <span>เช็คชื่อ</span></button>
+        <button class="nav" data-view="goodness">✦ <span>คะแนนความดี</span></button>
+        <button class="nav" data-view="saving">฿ <span>ออมเงิน</span></button>
+        <button class="nav" data-view="duty">▦ <span>เช็คการทำเวร</span></button>
+      </nav>
+      <div class="quote">“ทำดีทีละนิด<br>เก็บออมทีละหน่อย<br>เติบโตไปด้วยกัน”</div>
+    </aside>
+
+    <main>
+      <header><div><p id="dateLine">วันพฤหัสบดีที่ 17 กันยายน 2569</p><h1 id="pageTitle">สวัสดีตอนเช้า ห้อง ป.6/2</h1></div><div class="header-actions"><button class="soft" id="resetBtn">↻ เริ่มข้อมูลตัวอย่างใหม่</button><div class="teacher">คต<span>ครูเต้ย<br><small>ครูประจำชั้น</small></span></div></div></header>
+
+      <section class="view active" id="dashboard">
+        <div class="hero"><div><span class="eyebrow">ภาพรวมวันนี้</span><h2>งานประจำวันของห้อง ป.6/2</h2><p>เช็คชื่อ · ตรวจเวร · คะแนนพฤติกรรม · เงินออม</p></div><div class="hero-art">📋<span>✓</span></div></div>
+        <div class="stats">
+          <article><div class="icon green">✓</div><div><small>มาเรียนวันนี้</small><strong id="presentStat">27/30</strong><span>90% ของห้อง</span></div></article>
+          <article><div class="icon orange">±</div><div><small>คะแนนวันนี้</small><strong id="goodStat">+0</strong><span>รวมบวกและหัก</span></div></article>
+          <article><div class="icon blue">฿</div><div><small>เงินออมรวม</small><strong id="savingStat">฿8,450</strong><span>เดือนกันยายน</span></div></article>
+          <article><div class="icon purple">▦</div><div><small>เวรเรียบร้อย</small><strong id="dutyStat">0/5</strong><span>จุดตรวจวันนี้</span></div></article>
+        </div>
+        <div class="grid-two"><article class="panel"><div class="panel-head"><div><span class="eyebrow">ดาวเด่นประจำสัปดาห์</span><h3>เด็กดีที่น่าชื่นชม</h3></div></div><div id="stars" class="stars"></div></article><article class="panel"><div class="panel-head"><div><span class="eyebrow">กิจกรรมล่าสุด</span><h3>เรื่องดี ๆ ในห้องเรา</h3></div></div><div id="feed" class="feed"></div></article></div>
+      </section>
+
+      <section class="view" id="attendance"><div class="section-head"><div><span class="eyebrow">เช็คชื่อประจำวัน</span><h2>วันนี้ใครมาเรียนบ้าง?</h2></div><button class="primary" id="allPresent">✓ มาครบทุกคน</button></div><div class="summary-strip"><span><b id="sumPresent">27</b> มาเรียน</span><span><b id="sumLate">1</b> มาสาย</span><span><b id="sumLeave">1</b> ลา</span><span><b id="sumAbsent">1</b> ขาด</span></div><div id="attendanceList" class="student-grid"></div></section>
+
+      <section class="view" id="duty"><div class="section-head"><div><span class="eyebrow">เวรประจำวัน</span><h2>ตรวจความเรียบร้อยก่อนเริ่มเรียน</h2></div><button class="primary" id="allDutyDone">✓ เรียบร้อยทุกจุด</button></div><div class="summary-strip"><span><b id="dutyDone">0</b> เรียบร้อย</span><span><b id="dutyPending">5</b> รอตรวจ</span><span><b id="dutyFix">0</b> ต้องแก้ไข</span></div><div id="dutyList" class="duty-grid"></div></section>
+
+      <section class="view" id="goodness"><div class="section-head"><div><span class="eyebrow">คะแนนพฤติกรรม</span><h2>บันทึกคะแนนรายบุคคล</h2></div><div class="button-row"><button class="danger" id="deductGood">− หักคะแนน</button><button class="primary" id="addGood">＋ เพิ่มคะแนน</button></div></div><div class="panel"><div class="panel-head"><h3>คะแนนนักเรียน</h3><span class="pill">คะแนนสะสม</span></div><div id="leaderboard" class="leaderboard"></div></div></section>
+
+      <section class="view" id="saving"><div class="section-head"><div><span class="eyebrow">บันทึกการออม</span><h2>เก็บเล็กผสมน้อยอย่างสม่ำเสมอ</h2></div><button class="primary" id="addSaving">＋ บันทึกเงินออม</button></div><div class="saving-hero"><div><small>ยอดออมรวมเดือนนี้</small><strong id="savingHero">฿8,450</strong><p>บันทึกยอดออมของนักเรียนแต่ละคน</p></div><div class="jar">🫙</div></div><article class="panel"><div class="panel-head"><h3>นักออมสม่ำเสมอ</h3><span class="pill">เดือนนี้</span></div><div id="savers" class="savers"></div></article></section>
+    </main>
+  </div>
+
+  <dialog id="modal"><form method="dialog"><button class="close">×</button><span class="eyebrow" id="modalKicker">บันทึก</span><h2 id="modalTitle">เพิ่มรายการ</h2><label>นักเรียน<select id="studentSelect"></select></label><label id="amountLabel">จำนวน<input id="amountInput" type="number" min="1" value="5" /></label><label id="reasonWrap">เหตุผล<select id="reasonSelect"></select></label><button class="primary full" id="saveModal" value="default">บันทึกรายการ</button></form></dialog>
+  <div id="toast">บันทึกแล้ว</div>
+  <script src="app.js"></script>
+</body>
+</html>
