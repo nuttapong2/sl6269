@@ -30,3 +30,11 @@ By default 37 numbered students are created with student login disabled. No real
 - Five failed attempts lock an existing account for 15 minutes. Password hashes use PBKDF2 SHA-256 with individual salt and 100,000 iterations. Use HTTPS and provider request-rate limiting in production.
 
 Run node --test server/*.test.mjs. The integration test invokes the real HTTP handler through streams, without opening network sockets, and uses only fictitious student records.
+
+## Additional teacher operations
+
+- attendance accepts an optional ISO date (YYYY-MM-DD) for corrections and past dates. Omitting it selects today in Asia/Bangkok. Each student has a single final status per date and each correction remains in the audit ledger.
+- upsertItem accepts item {id,name,slot,price,color,shape,imageUrl,archived}. Only teachers can add or edit. Slots are shirt, hat, accessory. Raster image URLs must use HTTPS and end in PNG/JPEG/WebP. Archived products cannot be bought, and existing owners can still equip them.
+- reverseMoney accepts studentId, entryId and a required note. It appends a compensating money entry with reversesEntryId, leaving the original untouched. Only money entries with exact satang metadata can be reversed, only once, and balances cannot become negative.
+- Students receive only their own attendance, duty, savings and ledger entries. Anonymous readers receive numbered avatars and public point balances, with no real names, school IDs, savings or private histories.
+- The frontend exports teacher-only CSV files for student balances, NFC links and attendance, and supports monthly attendance totals, item preview, wardrobe removal and product management.
