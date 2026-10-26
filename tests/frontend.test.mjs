@@ -139,3 +139,13 @@ test('teacher catalog controls validate HTTPS, retain archived ownership, and ga
  assert.equal(p.run('reversibleMoneyEntry(ledger[0])'),false);
  p.run('teacher=false');assert.equal(p.run('reversibleMoneyEntry(ledger[0])'),false);
 });
+
+test('product form enforces backend slot shapes, product IDs and image extensions',()=>{
+ const h=harness();
+ for(const [slot,shape] of [['shirt','shirt'],['hat','cap'],['accessory','star']])assert.equal(h.run(`validCatalogItem({id:'item-test',name:'Item',slot:'${slot}',shape:'${shape}',price:0,color:'#001122',imageUrl:'https://example.test/picture.webp?x=1'})`),true);
+ for(const invalid of ["slot:'shirt',shape:'cap'","slot:'hat',shape:'star'","slot:'accessory',shape:'shirt'"])assert.equal(h.run(`validCatalogItem({id:'item-test',name:'Item',${invalid},price:0,color:'#001122',imageUrl:''})`),false);
+ for(const id of ['1invalid','a','Invalid'])assert.equal(h.run(`validCatalogItem({id:'${id}',name:'Item',slot:'shirt',shape:'shirt',price:0,color:'#001122',imageUrl:''})`),false);
+ for(const imageUrl of ['https://example.test/page.html','https://example.test/item.svg','https://user:pass@example.test/item.png'])assert.equal(h.run(`validCatalogItem({id:'item-test',name:'Item',slot:'shirt',shape:'shirt',price:0,color:'#001122',imageUrl:'${imageUrl}'})`),false);
+ assert.ok(h.run("itemShapeOptions('shirt')").includes('value="shirt"'));
+ h.run("teacher=true;tab='shop';render()");assert.ok(h.html.includes('value="shirt" selected'));
+});

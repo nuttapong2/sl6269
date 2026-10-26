@@ -18,6 +18,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: Build free Apps Script installer
+        run: npm run build:gas
       - name: Test business rules and server
         run: node --test server/*.test.mjs tests/*.test.mjs
       - name: Build public files only

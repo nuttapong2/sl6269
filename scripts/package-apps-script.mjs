@@ -1,0 +1,13 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+import {resolve,dirname} from 'node:path';
+import vm from 'node:vm';
+const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
+const get=async name=>(await readFile(resolve(root,'apps-script',name),'utf8')).replace(/\r\n/g,'\n');
+const [core,backend,html]=await Promise.all(['Core.gs','Code.gs','Index.html'].map(get));
+const needle="HtmlService.createTemplateFromFile('Index')";
+if(!backend.includes(needle))throw Error('Backend template signature changed');
+const source='// Paste this entire file into Code.gs in a new standalone Apps Script project.\n// Do not copy Core.gs or Code.gs separately when using this one-file installer.\n'+core+'\nconst CLASSROOM_HTML_='+JSON.stringify(html)+';\n'+backend.replace(needle,'HtmlService.createTemplate(CLASSROOM_HTML_)');
+new vm.Script(source,{filename:'Install.gs'});
+await writeFile(resolve(root,'apps-script/Install.gs'),source,'utf8');
+console.log('Built single-file apps-script/Install.gs.');
