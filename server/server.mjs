@@ -3,7 +3,7 @@ import {DatabaseSync} from 'node:sqlite';
 import {mkdirSync,readFileSync} from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {catalog} from '../assets/avatar.js';
+import {getCatalog,upsertItem} from './catalog.mjs';
 import {applyAction} from './business.mjs';
 import {digest,passwordHash,verify} from './crypto.mjs';
 const fail=(message,status=400)=>Object.assign(new Error(message),{status});
@@ -16,7 +16,7 @@ export function importRoster(state,students){
  for(const x of validated)if(state.students.some(s=>!ids.has(s.id)&&x.schoolId&&s.schoolId===x.schoolId))throw fail('School ID already in use');
  for(const x of validated){let s=state.students.find(s=>s.id===x.id);if(!s){s=blank(x.id);state.students.push(s);}if(s.schoolId!==x.schoolId){delete s.passwordHash;state.sessions=state.sessions.filter(a=>a.studentId!==s.id);}Object.assign(s,x);}state.students.sort((a,b)=>a.id-b.id);
 }
-export function serialize(state,p){const teacher=p?.role==='teacher',studentId=p?.studentId||null;return {teacher,studentId,catalog,students:state.students.map(s=>({id:s.id,name:teacher||studentId===s.id?s.name:'Student '+s.id,schoolId:teacher?s.schoolId:undefined,merit:s.merit,coins:s.coins,savings:teacher||studentId===s.id?s.savings:null,equipped:s.equipped,owned:s.owned,attendance:teacher||studentId===s.id?s.attendance:{},duty:teacher||studentId===s.id?s.duty||{}:{}})),ledger:teacher?state.ledger:[]};}
+export function serialize(state,p){const teacher=p?.role==='teacher',studentId=p?.studentId||null;return {teacher,studentId,catalog:getCatalog(state),students:state.students.map(s=>({id:s.id,name:teacher||studentId===s.id?s.name:'Student '+s.id,schoolId:teacher?s.schoolId:undefined,merit:s.merit,coins:s.coins,savings:teacher||studentId===s.id?s.savings:null,equipped:s.equipped,owned:s.owned,attendance:teacher||studentId===s.id?s.attendance:{},duty:teacher||studentId===s.id?s.duty||{}:{}})),ledger:teacher?state.ledger:studentId?state.ledger.filter(entry=>entry.studentId===studentId):[]};}
 export function createApp(options={}){
  const adminUsername=options.adminUsername||process.env.ADMIN_USERNAME||'krutoey',adminPassword=options.adminPassword||process.env.ADMIN_PASSWORD;
  if(!adminPassword||adminPassword.length<8)throw Error('ADMIN_PASSWORD required (at least 8 characters)');
@@ -37,7 +37,7 @@ export function createApp(options={}){
  try{const url=new URL(req.url,'http://localhost');
  if(req.method==='GET'&&url.pathname==='/config.js'){res.writeHead(200,{...headers,'Content-Type':'text/javascript; charset=utf-8'});return res.end('export const config = {apiBase: globalThis.location.origin};');}
  if(req.method==='GET'&&staticFiles[url.pathname]){const [file,mime]=staticFiles[url.pathname];res.writeHead(200,{...headers,'Content-Type':mime});return res.end(readFileSync(path.join(publicRoot,file)));}
-if(url.pathname==='/health'&&req.method==='GET')return send(200,{ok:true});let input={};if(req.method==='POST'){req.setEncoding('utf8');let body='';for await(const chunk of req){body+=chunk;if(Buffer.byteLength(body)>128000)throw fail('Request too large',413);}try{input=JSON.parse(body);}catch{throw fail('Invalid JSON');}if(!input||typeof input!=='object'||Array.isArray(input))throw fail('Invalid request');}
+if(url.pathname==='/health'&&req.method==='GET')return send(200,{ok:true});let input={};if(req.method==='POST'){req.setEncoding('utf8');let body='';for await(const chunk of req){body+=chunk;if(Buffer.byteLength(body)>256000)throw fail('Request too large',413);}try{input=JSON.parse(body);}catch{throw fail('Invalid JSON');}if(!input||typeof input!=='object'||Array.isArray(input))throw fail('Invalid request');}
  const result=await exclusive(async()=>{const state=read(),now=Date.now();state.sessions=state.sessions.filter(s=>s.expires>now);const p=await principal(req,state);
  if(url.pathname==='/api/state'&&req.method==='GET')return serialize(state,p);
  if(url.pathname==='/api/login'&&req.method==='POST'){
@@ -50,7 +50,8 @@ if(url.pathname==='/health'&&req.method==='GET')return send(200,{ok:true});let i
  if(url.pathname==='/api/password'&&req.method==='POST'){if(p.role!=='student')throw fail('Student account required',403);const s=state.students.find(x=>x.id===p.studentId);if(typeof input.currentPassword!=='string'||typeof input.newPassword!=='string'||input.newPassword.length<6||input.newPassword.length>200)throw fail('New password must contain 6 to 200 characters');const correct=s.passwordHash?await verify(input.currentPassword,s.passwordHash):input.currentPassword===s.schoolId;if(!correct)throw fail('Current password is incorrect',403);s.passwordHash=await passwordHash(input.newPassword);state.sessions=state.sessions.filter(x=>x.studentId!==s.id||x.hash===p.hash);save(state);return {ok:true};}
  if(url.pathname==='/api/action'&&req.method==='POST'){
  if(p.role!=='teacher'&&!(Number(input.studentId)===p.studentId&&['buy','equip'].includes(input.action)))throw fail('Not authorized',403);if(typeof input.requestId!=='string'||input.requestId.length<8||input.requestId.length>100)throw fail('Request ID required');const key=(p.role==='teacher'?'teacher':'student:'+p.studentId)+':'+input.requestId;if(state.requests.includes(key))return {ok:true};
- if(input.action==='importRoster'){importRoster(state,input.students);state.ledger.unshift({id:crypto.randomUUID(),action:'importRoster',detail:'Imported roster',at:new Date().toISOString(),actor:'teacher'});}
+ if(input.action==='upsertItem'){const item=upsertItem(state,input.item);state.ledger.unshift({id:crypto.randomUUID(),action:'upsertItem',detail:'Updated product '+item.id,at:new Date().toISOString(),actor:'teacher'});}
+ else if(input.action==='importRoster'){importRoster(state,input.students);state.ledger.unshift({id:crypto.randomUUID(),action:'importRoster',detail:'Imported roster',at:new Date().toISOString(),actor:'teacher'});}
  else if(input.action==='duty'){const s=state.students.find(x=>x.id===Number(input.studentId)),date=input.date||new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Bangkok'}).format(new Date());if(!s||!/^\d{4}-\d{2}-\d{2}$/.test(date)||new Date(date+'T00:00:00Z').toISOString().slice(0,10)!==date||![5,-5].includes(input.amount))throw fail('Duty requires date and amount +5 or -5');s.duty||={};const desired=input.amount,raw=s.duty[date],previous=typeof raw==='number'?raw:raw===true?5:0;if(desired!==previous){const delta=desired-previous,coinDelta=(desired===5?5:0)-(previous===5?5:0);if(s.merit+delta<0||s.coins+coinDelta<0)throw fail('Insufficient merit or coins to correct duty');if(!Number.isSafeInteger(s.merit+delta)||!Number.isSafeInteger(s.coins+coinDelta))throw fail('Balance limit exceeded');s.merit+=delta;s.coins+=coinDelta;s.duty[date]=desired;state.ledger.unshift({id:crypto.randomUUID(),studentId:s.id,action:'duty',detail:'Duty '+date+' '+(desired>0?'+':'')+desired+' (change '+delta+')',note:String(input.note||'').slice(0,180),at:new Date().toISOString(),actor:'teacher'});}}
  else{applyAction(state,input,p.role==='teacher'?'teacher':'student:'+p.studentId);if(['resetStudentPassword','setSchoolId'].includes(input.action))delete state.loginAttempts['student:'+Number(input.studentId)];}
  state.requests.push(key);state.requests=state.requests.slice(-10000);save(state);return {ok:true};}throw fail('Not found',404);});send(200,result);

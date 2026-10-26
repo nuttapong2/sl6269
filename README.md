@@ -1,4 +1,15 @@
-# ห้องของเรา ป.6/2 — SL6269
+#
+## ตรวจตัวอย่างที่เผยแพร่แล้ว
+
+เปิด https://sl6269-preview.onrender.com ได้ทั้งมือถือและคอมพิวเตอร์ โหมด DEMO ใช้ข้อมูลสมมติ เก็บเฉพาะอุปกรณ์ ไม่รับรหัสผ่านจริงหรือเงินฝากจริง
+
+โค้ดระบบจริงมี API และ SQLite แล้ว แต่ยังไม่ได้เปิดบริการฐานข้อมูลถาวร การเริ่มบริการจริงผ่าน Blueprint จะสร้าง web service แบบเสียเงินพร้อม disk 1 GB ตรวจยอดใน Render ก่อนยืนยัน: https://dashboard.render.com/blueprint/new?repo=https://github.com/nuttapong2/sl6269
+
+ตั้ง ADMIN_PASSWORD เป็น secret ใน Render และตั้ง FRONTEND_ORIGIN=https://sl6269-preview.onrender.com จากนั้นเปิด URL ของ backend เพื่อเข้าสู่ระบบครูและนำเข้ารายชื่อ Backend เสิร์ฟหน้าเว็บและ API ใน URL เดียวกันได้ จึงไม่จำเป็นต้องเปิด GitHub Pages
+
+GitHub Actions ทดสอบและสร้างไฟล์ทุกครั้ง ส่วน deploy ไป GitHub Pages จะทำเฉพาะเมื่อเจ้าของเปิด Pages และตั้ง repository variable ENABLE_GITHUB_PAGES=true ตัวอย่าง Render เผยแพร่แยกจาก Pages
+
+ ห้องของเรา ป.6/2 — SL6269
 
 เว็บไซต์ห้องเรียนโรงเรียนวัดศรีโลหะราษฎร์บำรุง แยกออกจาก GPT Sites ใช้ GitHub เป็นแหล่งโค้ดและ GitHub Pages สำหรับหน้าเว็บ เซิร์ฟเวอร์ Node.js + SQLite ใช้สำหรับข้อมูลร่วมกันหลายเครื่อง
 

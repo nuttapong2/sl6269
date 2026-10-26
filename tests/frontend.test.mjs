@@ -110,3 +110,32 @@ test('demo duty repeats are idempotent and corrections reverse the prior contrib
   assert.equal(h.run('current().merit'),0,'Reject a negative balance');
   assert.equal(h.run('current().coins'),0);
 });
+
+test('wardrobe removal preserves owned items and balances; CSV protects formulas and contains NFC links',()=>{
+ const h=harness();h.run("teacher=true;change(100);buy('hat-cat');unequip('hat')");
+ assert.equal(h.run('current().equipped.hat'),undefined);
+ assert.equal(h.run("current().owned.includes('hat-cat')"),true);
+ assert.equal(h.run('current().coins'),45);
+ h.run("current().name='=HYPERLINK(\"unsafe\")'");
+ const csv=h.run('csvContent()');assert.ok(csv.includes("'=HYPERLINK"));assert.ok(csv.includes('?student=2'));assert.ok(csv.includes('45'));
+ h.run("current().attendance={'2026-10-01':'present','2026-10-02':'late','2026-09-01':'absent'};attendanceMonth='2026-10';tab='students';render()");
+ assert.ok(h.html.includes('id="attendance-date"'));assert.ok(h.html.includes('มาเรียน 1 · มาสาย 1 · ลา 0 · ขาด 0'));
+ h.run("teacher=false;studentSession=2;tab='history';render()");assert.ok(h.html.includes('2026-10-01'));assert.ok(h.html.includes('ประวัติของฉัน'));
+ h.run("studentSession=3;selected=2;tab='students';render()");assert.ok(!h.html.includes('สรุปการมาเรียนรายเดือน'));
+});
+
+test('teacher catalog controls validate HTTPS, retain archived ownership, and gate money reversals',async()=>{
+ const h=harness();h.run("teacher=true;tab='shop';catalog=[...catalog,{id:'hat-retired',name:'Retired Item',slot:'hat',price:12,color:'#abc123',shape:'crown',archived:true}];current().owned.push('hat-retired');render()");
+ assert.ok(h.html.includes('id="item-image"'));
+ assert.ok(h.html.includes('data-item="hat-retired"'),'Archived owned items remain wearable');
+ assert.ok(!h.html.includes("tryItem('hat-retired')"),'Archived items are not on sale');
+ assert.equal(h.run("validCatalogItem({id:'hat-new',name:'Hat',slot:'hat',price:0,color:'#abc123',shape:'crown',imageUrl:'https://example.test/hat.png'})"),true);
+ assert.equal(h.run("validCatalogItem({id:'hat-new',name:'Hat',slot:'hat',price:0,color:'#abc123',shape:'crown',imageUrl:'javascript:alert(1)'})"),false);
+ const p=harness({apiBase:'https://api.example.test',fetch:async()=>({ok:true,json:async()=>({students:[{id:1,name:'One',merit:0,coins:0,savings:0,equipped:{},owned:[],attendance:{}}],ledger:[],teacher:true})})});
+ await new Promise(resolve=>setTimeout(resolve,0));
+ p.run("ledger=[{id:'cash-1',action:'deposit',moneyDeltaSatang:10000,student:1}]");
+ assert.equal(p.run('reversibleMoneyEntry(ledger[0])'),true);
+ p.run("ledger.push({id:'undo-1',action:'reverseMoney',reversesEntryId:'cash-1'})");
+ assert.equal(p.run('reversibleMoneyEntry(ledger[0])'),false);
+ p.run('teacher=false');assert.equal(p.run('reversibleMoneyEntry(ledger[0])'),false);
+});

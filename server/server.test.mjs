@@ -13,6 +13,22 @@ test('authorization, privacy, money, duty retry, password reset, persistence and
  assert.equal((await call('/api/password',{currentPassword:'10001',newPassword:'changed-password'},u)).status,200);assert.equal((await call('/api/login',{username:'10001',password:'10001'})).status,401);const changed=await call('/api/login',{username:'10001',password:'changed-password'});assert.equal(changed.status,200);
  await action({action:'resetStudentPassword',studentId:1},t);assert.equal((await action({action:'equip',studentId:1,itemId:'',slot:'shirt'},changed.data.token)).status,401);
  for(let i=0;i<5;i++)assert.equal((await call('/api/login',{username:'10002',password:'wrong'})).status,401);assert.equal((await call('/api/login',{username:'10002',password:'10002'})).status,429);
+ const product={id:'shirt-custom',name:'Custom test shirt',slot:'shirt',price:30,color:'#112233',shape:'shirt'};
+ assert.equal((await action({action:'upsertItem',item:product},t)).status,200);
+ const freshStudent=(await call('/api/login',{username:'10001',password:'10001'})).data.token;
+ assert.equal((await action({action:'upsertItem',item:{...product,price:0}},freshStudent)).status,403);
+ await action({action:'merit',studentId:1,amount:100,note:'custom shop test'},t);
+ let prior=(await call('/api/state',null,t)).data.students[0];
+ assert.equal((await action({action:'buy',studentId:1,itemId:product.id},freshStudent)).status,200);
+ let after=(await call('/api/state',null,freshStudent)).data;
+ assert.equal(after.students[0].merit,prior.merit);assert.equal(after.students[0].coins,prior.coins-30);assert.equal(after.students[0].savings,prior.savings);
+ assert.ok(after.ledger.length);assert.ok(after.ledger.every(e=>e.studentId===1));
+ await action({action:'upsertItem',item:{...product,archived:true}},t);
+ assert.equal((await action({action:'buy',studentId:2,itemId:product.id},t)).status,400);
+ assert.equal((await action({action:'equip',studentId:1,itemId:product.id},freshStudent)).status,200);
+ assert.equal((await action({action:'attendance',studentId:1,date:'2026-09-15',status:'late'},t)).status,200);
+ assert.equal((await call('/api/state',null,freshStudent)).data.students[0].attendance['2026-09-15'],'late');
+ assert.deepEqual((await call('/api/state')).data.ledger,[]);
  await app.close();app=createApp(options);assert.equal((await call('/api/state',null,t)).data.students[0].savings,7515);await call('/api/login',{action:'logout'},t);assert.equal((await action({action:'rename',studentId:1,name:'wrong'},t)).status,401);
  }finally{await app.close();}
 });
