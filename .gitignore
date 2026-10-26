@@ -1,17 +1,17 @@
-# Local student records and media
-*.jpg
-*.jpeg
-*.png
-*.pdf
+node_modules/
+_site/
+data/
+.env
+.env.*
+!.env.example
+private*
+roster*.json
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
 *.xlsx
 *.xls
-
-# Local build/package files
-.sites-package-stage/
-.site-build-marker
-site-package.tar.gz
-node_modules/
-.dev.vars
-.env*
-!.env.example
-
+*.pdf
+*.zip
+*.log

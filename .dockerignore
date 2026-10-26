@@ -1,0 +1,6 @@
+.git
+node_modules
+private-data
+*.sqlite*
+*roster*.json
+.env*
